@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rootine – Habit Accountability</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
+
+    <style>
+      /* TEAM SECTION */
+      .team-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 28px;
+        margin-top: 20px;
+      }
+
+      .team-card {
+        flex: 1 1 300px;
+        max-width: 340px;
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 20px;
+        padding: 24px 20px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        text-align: center;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .team-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.45);
+      }
+
+      .team-photo {
+        width: 130px;
+        height: 130px;
+        border-radius: 999px;
+        object-fit: cover;
+        border: 3px solid rgba(148, 163, 184, 0.7);
+        margin-bottom: 14px;
+      }
+
+      .team-name {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .team-role {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .team-bio {
+        font-size: 15px;
+        line-height: 1.75;
+        padding: 0 6px;
+        color: #d1d5db;
+      }
+
+      .pdf-frame {
+        width: 100%;
+        height: 100vh;
+        border: none;
+        border-radius: 12px;
+        background: #020617;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.6);
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .pdf-frame {
+          height: 80vh;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #0f172a;
+        --bg-light: #0b1220;
+        --card: #020617;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.16);
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #1f2937 0, #020617 45%);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Top bar with tabs */
+      header {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.96);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+        backdrop-filter: blur(14px);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .site-title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .site-title-main {
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .site-title-main span.emoji {
+        font-size: 18px;
+      }
+
+      .site-title-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tab-btn {
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid transparent;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        white-space: nowrap;
+      }
+
+      .tab-btn:hover {
+        color: var(--text);
+        border-color: rgba(148, 163, 184, 0.6);
+      }
+
+      .tab-btn.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        border-color: var(--accent);
+      }
+
+      /* Main content */
+      main {
+        flex: 1;
+        width: 100%;
+      }
+
+      .pane-wrapper {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 18px 40px;
+      }
+
+      .pane {
+        display: none;
+        background: rgba(15, 23, 42, 0.85);
+        border-radius: 18px;
+        padding: 20px 22px 22px;
+        box-shadow: 0 18px 35px rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+      }
+
+      .pane.active {
+        display: block;
+      }
+
+      h2 {
+        margin: 0 0 6px;
+        font-size: 22px;
+      }
+
+      p {
+        margin: 0 0 8px;
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .tagline {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 4px 0 8px;
+      }
+
+      .pill {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--text);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+      }
+
+      ul.bullets {
+        margin: 4px 0 8px 18px;
+        padding: 0;
+        font-size: 14px;
+      }
+
+      ul.bullets li {
+        margin-bottom: 4px;
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 12px;
+        padding: 12px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        margin: 8px 0;
+      }
+
+      .small-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .links-row a {
+        display: inline-block;
+        margin-right: 8px;
+        margin-bottom: 6px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        text-decoration: none;
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .links-row a:hover {
+        background: rgba(148, 163, 184, 0.16);
+      }
+
+      figure.proto {
+        margin: 28px 0;
+      }
+
+      .proto-image {
+        width: 50%;
+        max-width: 400px;
+        display: block;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        margin: 0 auto;
+      }
+
+      .proto-caption {
+        font-size: 17px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin-top: 12px;
+        text-align: center;
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      footer {
+        text-align: center;
+        padding: 10px 12px 14px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 720px) {
+        .header-inner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        nav {
+          width: 100%;
+          justify-content: flex-start;
+          overflow-x: auto;
+        }
+
+        .pane-wrapper {
+          padding: 18px 12px 26px;
+        }
+
+        .pane {
+          padding: 16px 14px 18px;
+        }
+      }
+      .pdfjs-container {
+        width: 100%;
+        max-width: 100%;
+        background: #0f172a;
+        padding: 20px 0;
+      }
+
+      .pdf-page {
+        display: block;
+        width: 90%;
+        max-width: 900px;
+        margin: 0 auto 30px auto;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="site-title">
+          <div class="site-title-main">
+            <span class="emoji">🌱</span>
+            <span>Rootine</span>
+          </div>
+        </div>
+        <nav>
+          <button class="tab-btn active" data-tab="home">Home</button>
+          <button class="tab-btn" data-tab="proposal">Proposal</button>
+          <button class="tab-btn" data-tab="prototype">Prototype</button>
+          <button class="tab-btn" data-tab="video">
+            Video &amp; Final Report
+          </button>
+          <button class="tab-btn" data-tab="team">Team</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="pane-wrapper">
+        <!-- HOME -->
+        <section class="pane active" id="pane-home">
+          <h2>Home</h2>
+          <p class="tagline">
+            Rootine helps people stay consistent with small but important habits
+            by combining a simple plant metaphor with social rewards.
+          </p>
+          <p>
+            Many people struggle with maintaining consistency in performing
+            small (but important) tasks. There’s a lot of existing habit
+            tracking apps out there (Finch was most common in user surveys), but
+            we found in our needfinding that they have low rates of long-term
+            retention. This was due to a number of factors, but often users
+            would quit using a habit-tracking app (and therefore lose track of
+            their tasks) due to it being overly complicated, a paywall, or
+            completing the main “story” associated with many apps. We found that
+            users desired simplicity, positive reinforcement, and tangible
+            rewards in a habit tracker. They also desired more customization
+            with specifying the required timing of different habits.
+          </p>
+          <p>
+            Rootine aims to make habit tracking more motivating and sustainable.
+            Each habit is represented by a virtual plant that grows when the
+            user checks in. For every plant, the user or a friend can set a
+            secret reward that only unlocks once the plant reaches harvest,
+            turning consistency into something fun and rewarding.
+          </p>
+        </section>
+
+        <!-- PROPOSAL -->
+        <section class="pane" id="pane-proposal">
+          <h2>Proposal &amp; Needfinding</h2>
+          <p class="tagline">
+            We started by understanding how people currently track habits and
+            why they abandon habit apps.
+          </p>
+          <p>
+            We conducted surveys and interviews asking participants how they
+            track habits, which apps they have tried, and what made them stop
+            using those tools. This gave us a grounded view of real frustrations
+            and desires, not just our own assumptions.
+          </p>
+
+          <div class="card">
+            <p><strong>Key findings</strong></p>
+            <ul class="bullets">
+              <li>
+                Most participants had tried at least one habit app, but nearly
+                all had stopped using it.
+              </li>
+              <li>
+                Popular “virtual pet” apps like Finch were motivating at first,
+                but lost impact once the story or pet growth felt complete.
+              </li>
+              <li>
+                Participants were annoyed by cluttered interfaces, constant
+                notifications, ads, and features locked behind paywalls.
+              </li>
+              <li>
+                People wanted something simple, customizable, and positive, with
+                accountability to friends and meaningful rewards.
+              </li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <p><strong>Design proposal</strong></p>
+            <p>
+              Based on these insights, we proposed Rootine: a mobile app where
+              each habit is a customizable plant with a target “harvest” date.
+              The plant grows as the user completes their habit on schedule. For
+              each plant, the user can either:
+            </p>
+            <ul class="bullets">
+              <li>set a personal prize for themselves, or</li>
+              <li>
+                send a link to a friend, who creates a secret gift using a
+                simple companion website.
+              </li>
+            </ul>
+            <p>
+              The friend’s reward can be a gift card code, an encouraging
+              message, or a drawing. The user only sees this reward once they
+              successfully keep the habit going through the harvest date.
+            </p>
+          </div>
+        </section>
+
+        <!-- PROTOTYPE -->
+        <section class="pane" id="pane-prototype">
+          <h2>Prototype</h2>
+          <p class="tagline">
+            We iterated from early desktop sketches to a mobile-first flow and a
+            web companion for friend rewards.
+          </p>
+          <p>
+            Our prototyping explored different ways to visualize habits,
+            rewards, and customization. We started with desktop concepts, then
+            shifted to a mobile app that keeps everything local to the device
+            and feels more natural for day-to-day habit tracking.
+          </p>
+
+          <div class="card">
+            <p><strong>Early desktop explorations</strong></p>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-desktop-garden.png"
+                alt="Desktop prototype showing user's garden and streaks"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                Some of our prototyping floated the idea of a desktop app with a
+                login system and a garden dashboard. We later dropped this in
+                favor of a mobile app that handles everything locally.
+              </figcaption>
+            </figure>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-decorations.png"
+                alt="Prototype showing clickable decorations in the garden"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                We also explored letting users place and click on decorations in
+                their garden for extra rewards or surprises.
+              </figcaption>
+            </figure>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-streaks.png"
+                alt="Prototype screen showing 7, 30, and 100 day streak achievements"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                Several prototypes included streak-based achievements, similar
+                to apps like Duolingo, to celebrate longer-term consistency.
+              </figcaption>
+            </figure>
+          </div>
+
+          <div class="card">
+            <p><strong>Mobile plant creation flow</strong></p>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-new-plant.png"
+                alt="Mobile wireframe for creating a new plant habit"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                The new plant screen asks what habit the user wants to stick to,
+                lets them name the plant, choose a harvest date, and pick a
+                plant type.
+              </figcaption>
+            </figure>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-schedule.png"
+                alt="Mobile wireframe showing watering schedule options"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                The watering schedule screen balances flexibility and
+                simplicity, letting users choose specific days or a number of
+                times per day, week, or month.
+              </figcaption>
+            </figure>
+
+            <figure class="proto">
+              <img
+                src="images/prototype-gift.png"
+                alt="Mobile wireframe for adding a note or sending a gift to a friend"
+                class="proto-image"
+              />
+              <figcaption class="proto-caption">
+                The gift feature allows positive reinforcement and
+                accountability: users can attach a note or send a link to a
+                friend, who sets up a reward that is revealed when the plant is
+                harvested.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+        <!-- VIDEO & FINAL -->
+        <section class="pane" id="pane-video">
+          <h2>Final Product</h2>
+          <p class="tagline">
+            Our final product combines the Rootine mobile app with the web
+            companion for friend rewards.
+          </p>
+          <p>
+            We ran a small usability study where participants used the prototype
+            to create a habit, set a plant schedule, water it, harvest it, and
+            send a reward to a friend. Overall, participants found the app easy
+            to understand and liked the mix of visuals and rewards. Some
+            suggested clearer feedback around when plants would be harvested and
+            how streaks are counted, which we would explore in future
+            iterations.
+          </p>
+
+          <div class="card">
+            <p><strong>Demo video</strong></p>
+            <p class="small-note">Walkthrough of Rootine.</p>
+
+            <!-- Clickable text link -->
+            <p class="small-note">
+              <a
+                href="https://www.youtube.com/watch?v=7WUCXrLVsR4"
+                target="_blank"
+              >
+              </a>
+            </p>
+
+            <!-- Embedded player -->
+            <iframe
+              style="
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                border-radius: 12px;
+                border: none;
+              "
+              src="https://www.youtube.com/embed/7WUCXrLVsR4"
+              title="Rootine demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+
+          <!-- Embedded PDFs -->
+          <div class="card">
+            <p><strong>Final report</strong></p>
+            <div id="pdf-report-viewer" class="pdfjs-container"></div>
+          </div>
+
+          <div class="card">
+            <p><strong>Final slideshow</strong></p>
+            <p class="small-note">The presentation slides are embedded below</p>
+            <div id="pdf-slides-viewer" class="pdfjs-container"></div>
+          </div>
+        </section>
+
+        <!-- TEAM -->
+        <section class="pane" id="pane-team">
+          <h2>Team</h2>
+          <p class="tagline">University of Rochester · Rootine Project Team</p>
+
+          <div class="team-grid">
+            <div class="team-card">
+              <img
+                src="images/jenell.png"
+                alt="Photo of Jenell Son"
+                class="team-photo"
+              />
+              <div class="team-name">Jenell Son</div>
+              <div class="team-role">U i</div>
+              <p class="team-bio">
+                Yeah just do cs major and UX/UI for us all i think
+              </p>
+            </div>
+
+            <div class="team-card">
+              <img
+                src="images/nora.png"
+                alt="Photo of Nora Goodman"
+                class="team-photo"
+              />
+              <div class="team-name">Nora Goodman</div>
+              <div class="team-role">ap</div>
+              <p class="team-bio">
+                cs major, "made the core flutter app"? idk how else to describe
+                it 😭
+              </p>
+            </div>
+
+            <div class="team-card">
+              <img
+                src="images/Laith.png"
+                alt="Photo of Laith Ali"
+                class="team-photo"
+              />
+              <div class="team-name">Laith Ali</div>
+              <div class="team-role">Frontend swagveloper</div>
+              <p class="team-bio">Implemented the friend reward webpage.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>Rootine · Habit Accountability · CSC 212</footer>
+
+    <script>
+      // Simple tab switching
+      const buttons = document.querySelectorAll(".tab-btn");
+      const panes = document.querySelectorAll(".pane");
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tab;
+
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          panes.forEach((pane) => {
+            pane.classList.toggle("active", pane.id === `pane-${tab}`);
+          });
+        });
+      });
+    </script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+      async function renderPDF(url, containerId) {
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 2 });
+
+          const canvas = document.createElement("canvas");
+          canvas.classList.add("pdf-page");
+          const ctx = canvas.getContext("2d");
+
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          container.appendChild(canvas);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        renderPDF("Report.pdf", "pdf-report-viewer");
+        renderPDF("Presentation.pdf", "pdf-slides-viewer");
+      });
+    </script>
+  </body>
+</html>
